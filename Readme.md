@@ -86,6 +86,30 @@ For more info on available targets:
 make help
 ```
 
+### USB Permissions
+
+`picotool` requires access to the Pico's USB device. Without proper udev
+rules, `make flash` will fail with a permissions error. To fix this, create
+a udev rule:
+
+```sh
+sudo tee /etc/udev/rules.d/99-picotool.rules << 'EOF'
+# Raspberry Pi RP2350 - BOOTSEL mode
+SUBSYSTEM=="usb", ATTR{idVendor}=="2e8a", ATTR{idProduct}=="000f", MODE="0666", GROUP="plugdev"
+# Raspberry Pi RP2350 - Application mode (USB serial)
+SUBSYSTEM=="usb", ATTR{idVendor}=="2e8a", ATTR{idProduct}=="0009", MODE="0666", GROUP="plugdev"
+# Catch-all for Raspberry Pi USB devices
+SUBSYSTEM=="usb", ATTR{idVendor}=="2e8a", MODE="0666", GROUP="plugdev"
+EOF
+
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+```
+
+After this, unplug and re-plug the Pico. `make flash` should work without
+issues. Make sure your user is in the `plugdev` group (`groups` to check,
+`sudo usermod -aG plugdev $USER` to add).
+
 
 ## Module Generator
 
