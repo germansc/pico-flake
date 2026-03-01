@@ -57,6 +57,14 @@ $(BUILD_PATH)/$(BIN_NAME).uf2: $(BUILD_PATH)/Makefile $(shell find src -name '*.
 	$(MAKE) -C $(BUILD_PATH) -j$(shell nproc)
 	@echo ""
 	@echo "Build complete!"
+	@echo "------------------------------------------------"
+	@arm-none-eabi-size $(BUILD_PATH)/$(BIN_NAME).elf
+	@echo ""
+	@arm-none-eabi-size $(BUILD_PATH)/$(BIN_NAME).elf | awk 'NR==2 { \
+		printf "  Flash: %6.2f KB  (text + data)\n", ($$1 + $$2) / 1024; \
+		printf "    RAM: %6.2f KB  (data + bss)\n", ($$2 + $$3) / 1024; \
+	}'
+	@echo ""
 	@echo "Firmware: $(BUILD_PATH)/$(BIN_NAME).uf2"
 	@echo ""
 
