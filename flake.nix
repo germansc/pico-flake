@@ -13,6 +13,22 @@
 
         # Pico SDK with all submodules (TinyUSB, cyw43-driver, lwIP, etc.)
         pico-sdk-full = pkgs.pico-sdk.override { withSubmodules = true; };
+
+        # Raspberry Pi fork of OpenOCD with RP2350 support
+        # (upstream 0.12.0 only has RP2040 target configs)
+        openocd-rp2350 = pkgs.openocd.overrideAttrs (old: {
+          pname = "openocd-rp2350";
+          src = pkgs.fetchFromGitHub {
+            owner = "raspberrypi";
+            repo = "openocd";
+            rev = "sdk-2.2.0";
+            hash = "sha256-ZfbZVFVncHa1MvNJb4jbnU66vnlwVLBaOXPdgLqAneM=";
+            fetchSubmodules = false;
+          };
+          nativeBuildInputs = old.nativeBuildInputs ++ [
+            pkgs.autoreconfHook
+          ];
+        });
       in
       {
         devShells.default = pkgs.mkShell {
@@ -24,6 +40,10 @@
             pkgs.gnumake
             pkgs.python3
             pkgs.picotool
+
+            # Debugging
+            openocd-rp2350
+            pkgs.gdb
 
             # Native host toolchain (needed by pico-sdk build for pioasm/elf2uf2)
             pkgs.gcc
@@ -49,6 +69,7 @@
             echo "Toolchain: $(arm-none-eabi-gcc --version | head -n1)"
             echo "CMake:     $(cmake --version | head -n1)"
             echo "Picotool:  $(picotool version 2>/dev/null | head -n1)"
+            echo "OpenOCD:   $(openocd --version 2>&1 | head -n1)"
             echo ""
             echo "Run 'make help' for available targets"
           '';

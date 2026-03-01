@@ -13,6 +13,9 @@ BIN_NAME = pico-sdk
 SRC_PATH = src
 TEST_SRC_PATH = test/tests
 
+OPENOCD_INTERFACE ?= stlink
+OPENOCD_TARGET = target/rp2350.cfg
+
 # DEFAULT TARGET #
 .PHONY: default_target
 default_target: help
@@ -26,11 +29,15 @@ help:
 	@echo "$(AUTHOR)"
 	@echo ""
 	@echo "BUILD TARGETS:"
-	@echo "    build      : Configure and build the firmware (.uf2)"
+	@echo "    build      : Configure and build the firmware (.uf2) [Release]"
+	@echo "    debug      : Configure and build the firmware (.elf) [Debug, -Og]"
 	@echo "    rebuild    : Clean and build from scratch"
 	@echo ""
 	@echo "FLASH TARGETS:"
 	@echo "    flash      : Reboot pico into BOOTSEL and flash"
+	@echo ""
+	@echo "DEBUG TARGETS:"
+	@echo "    gdb        : Launch OpenOCD + GDB session (debug build)"
 	@echo ""
 	@echo "DEVELOPMENT TARGETS:"
 	@echo "    module <p> : Generate a new source module at the given path"
@@ -39,6 +46,10 @@ help:
 	@echo "AUXILIARY TARGETS:"
 	@echo "    clean      : Remove all build artifacts"
 	@echo "    help       : This help message"
+	@echo ""
+	@echo "VARIABLES:"
+	@echo "    OPENOCD_INTERFACE : Debug probe type (default: stlink)"
+	@echo "                        Options: stlink, jlink, cmsis-dap"
 	@echo ""
 
 .PHONY: clean
@@ -89,6 +100,40 @@ flash: build
 	@sleep 2
 	picotool load -v -x $(BUILD_PATH)/$(BIN_NAME).uf2
 	@echo ""
+
+# -------------------------------------------------------------- DEBUG TARGETS
+
+.PHONY: debug
+debug:
+	@echo ""
+	@echo "Configuring CMake build [Debug]..."
+	@mkdir -p $(BUILD_PATH)
+	cmake -B $(BUILD_PATH) -S . -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+	@ln -sf $(BUILD_PATH)/compile_commands.json compile_commands.json
+	@echo ""
+	@echo "Building firmware [Debug]..."
+	$(MAKE) -C $(BUILD_PATH) -j$(shell nproc)
+	@echo ""
+	@echo "Debug build complete!"
+	@echo "------------------------------------------------"
+	@arm-none-eabi-size $(BUILD_PATH)/$(BIN_NAME).elf
+	@echo ""
+	@arm-none-eabi-size $(BUILD_PATH)/$(BIN_NAME).elf | awk 'NR==2 { \
+		printf "  Flash: %6.2f KB  (text + data)\n", ($$1 + $$2) / 1024; \
+		printf "    RAM: %6.2f KB  (data + bss)\n", ($$2 + $$3) / 1024; \
+	}'
+	@echo ""
+	@echo "ELF: $(BUILD_PATH)/$(BIN_NAME).elf"
+	@echo ""
+
+.PHONY: gdb
+gdb: debug
+	@echo ""
+	@echo "Starting OpenOCD + GDB session..."
+	@echo "  Interface: $(OPENOCD_INTERFACE)"
+	@echo "  Target:    $(OPENOCD_TARGET)"
+	@echo ""
+	OPENOCD_INTERFACE=$(OPENOCD_INTERFACE) gdb -x .gdb/connect.gdb $(BUILD_PATH)/$(BIN_NAME).elf
 
 # -------------------------------------------------------- DEVELOPMENT TARGETS
 
