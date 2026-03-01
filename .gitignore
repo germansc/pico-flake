@@ -1,0 +1,52 @@
+# Build System:
+# -------------
+build/**
+
+# Unit-Tests
+# ----------
+tests/report/*
+test/build/*
+
+# Log Files
+*.log
+
+# Archivos de IDEs - LSPs
+# -----------------------
+.direnv
+.idea
+.ccls-cache
+.cache
+.vscode
+.clangd
+compile_commands.json
+
+# General C Ignores:
+# ------------------
+# Prerequisites
+*.d
+
+# Object files
+*.o
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Executables
+*.exe
+*.out
+*.app
+*.elf
+
+# Pico SDK / CMake
+*.uf2
+*.hex
+*.bin
+*.map
+*.dis
