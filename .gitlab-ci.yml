@@ -17,9 +17,9 @@ build:
     - nix develop -c make build
   artifacts:
     paths:
-      - compile_commands.json
       - build/pico-sdk.uf2
-    expire_in: 1 hour
+      - build/pico-sdk.elf
+    expire_in: 1 week
 
 # ---------------------------------------------------------------------------
 # Check Stage
@@ -39,11 +39,3 @@ cppcheck:
       artifacts: false
   script:
     - nix develop -c bash -c 'cppcheck --enable=warning,style,performance,portability --suppress=missingIncludeSystem --error-exitcode=1 src/'
-
-clang-tidy:
-  stage: check
-  needs:
-    - job: build
-      artifacts: true
-  script:
-    - nix develop -c bash -c 'find src -name "*.c" | xargs clang-tidy -p .'

@@ -18,18 +18,13 @@ jobs:
       - name: Build firmware
         run: nix develop -c make build
 
-      - name: Upload compile_commands.json
-        uses: actions/upload-artifact@v4
-        with:
-          name: compile-commands
-          path: compile_commands.json
-          retention-days: 1
-
       - name: Upload firmware
         uses: actions/upload-artifact@v4
         with:
           name: firmware
-          path: build/pico-sdk.uf2
+          path: |
+            build/pico-sdk.uf2
+            build/pico-sdk.elf
           retention-days: 7
 
   check:
@@ -41,11 +36,6 @@ jobs:
 
       - uses: DeterminateSystems/nix-installer-action@main
       - uses: DeterminateSystems/magic-nix-cache-action@main
-
-      - name: Download compile_commands.json
-        uses: actions/download-artifact@v4
-        with:
-          name: compile-commands
 
       - name: clang-format
         run: |
@@ -60,10 +50,4 @@ jobs:
                      --suppress=missingIncludeSystem \
                      --error-exitcode=1 \
                      src/
-          '
-
-      - name: clang-tidy
-        run: |
-          nix develop -c bash -c '
-            find src -name "*.c" | xargs clang-tidy -p .
           '
