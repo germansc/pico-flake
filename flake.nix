@@ -62,6 +62,12 @@
           # Point CMake at the Nix-provided Pico SDK
           PICO_SDK_PATH = "${pico-sdk-full}/lib/pico-sdk";
 
+          # Extra flags forwarded to clangd by the editor LSP config (specific to my neovim config).
+          # --query-driver tells clangd (and the Nix clangd wrapper) to
+          # interrogate the ARM GCC for its sysroot headers instead of
+          # falling back to host x86_64 glibc paths.
+          CLANGD_FLAGS = "--query-driver=/nix/store/*/bin/arm-none-eabi-*,/usr/bin/arm-none-eabi-*";
+
           shellHook = ''
             echo "Pico 2 W Development Environment"
             echo "================================="
